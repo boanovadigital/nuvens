@@ -1,0 +1,78 @@
+                            EEXTransientSubmarketCustomer genComs = (EEXTransientSubmarketCustomer)generatorComsumption.get(key);
+                            if (genComs == null)
+                            {
+                                if(anIntegratedReading.getIntegratedValueWithLossFactor() == null)
+                                {
+                                    // CR 1783
+                                    //aSubmarketCustomer.setValue(new Double(0));
+                                    aSubmarketCustomer.setTGGValue(new Double(0));
+                                    aSubmarketCustomer.setTGGCValue(new Double(0));
+                                }
+                                else
+                                {
+                                    // CR 1783
+                                    // Ana C. Caviglia - 23-01-2001 - reglas 2.1b
+                                    if (anIntegratedReading.getAdjustedIntegratedValue().doubleValue() +
+                                        anIntegratedReading.getGenerationTest().doubleValue() < 0)
+                                    {
+                                        aConsumption = anIntegratedReading.getIntegratedValueWithLossFactor().doubleValue();
+                                        ownership = aPowerPlant.getOwnership().doubleValue();
+                                        aSubmarketCustomer.setTGGCValue(new Double(-1 * aConsumption * ownership / 100));
+                                        aSubmarketCustomer.setTGGValue(new Double(0));
+                                    }
+                                    else
+                                    {
+                                        aGeneration = anIntegratedReading.getIntegratedValueWithLossFactor().doubleValue();
+                                        aGenerationFinalTest = anIntegratedReading.getGenerationFinalTest().doubleValue();
+                                        ownership = aPowerPlant.getOwnership().doubleValue();
+                                        aSubmarketCustomer.setTGGValue(new Double(aGeneration * ownership / 100 + aGenerationFinalTest * ownership / 100));
+                                        aSubmarketCustomer.setTGGCValue(new Double(0));
+                                    }
+
+                                }
+                                //Set Customer Identifier on Resource Identifier attribute
+                                aSubmarketCustomer.setCustomerIdentifier(aPowerPlant.getCustomerIdentifier());
+                                //Set Submarket ID on Resource type attribute
+                                aSubmarketCustomer.setSubmarketIdentifier(anActiveGeneratingUnit.getSubmarketID());
+                                //Set Begin and End Date
+                                aSubmarketCustomer.setBeginDate(new Date(periodBegin));
+                                aSubmarketCustomer.setEndDate(new Date(periodEnd));
+                                //Insert object anIntegratedReading on the Hashtable
+                                generatorComsumption.put(key, aSubmarketCustomer);
+                            }
+                            else
+                            {
+                                aComs = genComs.getTGGCValue();
+                                aGen = genComs.getTGGValue();
+                                if(anIntegratedReading.getIntegratedValueWithLossFactor()==null)
+                                {
+                                    pComs = new Double(0);
+                                    pGen = new Double(0);
+                                }
+                                else
+                                {
+                                    // Ana C. Caviglia - 23-01-2001 - reglas 2.1b
+                                    if (anIntegratedReading.getAdjustedIntegratedValue().doubleValue() +
+                                        anIntegratedReading.getGenerationTest().doubleValue() < 0)
+                                    {
+                                        aConsumption = anIntegratedReading.getIntegratedValueWithLossFactor().doubleValue();
+                                        ownership = aPowerPlant.getOwnership().doubleValue();
+                                        pComs = new Double(-1 * aConsumption * ownership / 100);
+                                        pGen = new Double(0);
+                                    }
+                                    else
+                                    {
+                                        aGeneration = anIntegratedReading.getIntegratedValueWithLossFactor().doubleValue();
+                                        aGenerationFinalTest = anIntegratedReading.getGenerationFinalTest().doubleValue();
+                                        ownership = aPowerPlant.getOwnership().doubleValue();
+                                        pGen = new Double(aGeneration * ownership / 100 + aGenerationFinalTest * ownership / 100);
+                                        pComs = new Double(0);
+                                    }
+                                }
+
+                                double comsumption = aComs.doubleValue() + pComs.doubleValue();
+                                genComs.setTGGCValue(new Double(comsumption));
+                                double generation = aGen.doubleValue() + pGen.doubleValue();
+                                genComs.setTGGValue(new Double(generation));
+                            }
+                        }
